@@ -46,6 +46,17 @@ func main() {
 		log.Fatal(err)
 	}
 	fmt.Printf("album found: %v\n", album)
+	
+	// Hard-code data into db
+	albID, err := addAlbum(Album{
+		Title:  "Big Bang",
+		Artist: "Enanitos Verdes",
+		Price:  6.50,
+	})
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Printf("ID of album added: %v\n", albID)
 }
 
 func init() {
@@ -76,7 +87,7 @@ func albumsByArtist(name string) ([]Album, error) {
 	// Loop through rows,using Scan to assign column data to struct fields
 	for rows.Next() {
 		var alb Album
-		if err := rows.Scan(&alb.ID, &alb.Title, &alb.Artist, &alb.Title); err != nil {
+		if err := rows.Scan(&alb.ID, &alb.Title, &alb.Artist, &alb.Price); err != nil {
 			return nil, fmt.Errorf("albumsByArtist %q: %v", name, err)
 		}
 		albums = append(albums, alb)
@@ -100,4 +111,18 @@ func albumByID(id int64) (Album, error) {
 		return alb, fmt.Errorf("albumsByID %d: %v", id, err)
 	}
 	return alb, nil
+}
+
+// addAlbum adds the specified album to the database,
+// returning the album ID of the new entry
+func addAlbum(alb Album) (int64, error) {
+	result, err := db.Exec("INSERT INTO album (title, artist, price) VALUES (?,?,?)", &alb.Title, &alb.Artist, &alb.Price)
+	if err != nil {
+		return 0, fmt.Errorf("addAlbum: %v", err)
+	}
+	id, err := result.LastInsertId()
+	if err != nil {
+		return 0, fmt.Errorf("addAlbum: %v", err)
+	}
+	return id, nil
 }
