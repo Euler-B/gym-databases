@@ -126,3 +126,9 @@ func addAlbum(alb Album) (int64, error) {
 	}
 	return id, nil
 }
+
+// TODO :
+// 1.- hacer mas modular el codigo de la app
+// 2.- hacer un refactor al makefile
+// 3.- añadir mas consultas sql, y migraciones
+// 4.- implementar tests y cobertura de los mismos
