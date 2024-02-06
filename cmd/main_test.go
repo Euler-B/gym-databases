@@ -1,19 +1,19 @@
 package main
 
 import (
-	"database/sql"
+	//"database/sql"
 	_ "fmt"
-	"log"
-	"os"
+	//"log"
+	//"os"
 	"testing"
 
-	"github.com/go-sql-driver/mysql"
+	//"github.com/go-sql-driver/mysql"
 	_ "github.com/joho/godotenv"
 )
 
 // add first test
 func TestAlbumsByArtist(t *testing.T) {
-	setupDB()
+	//setupDB()
 	// Insert test data into the database
 	_, err := addAlbum(Album{
 		Title:  "Album 1",
@@ -45,25 +45,27 @@ func TestAlbumsByArtist(t *testing.T) {
 	}
 }
 
-func setupDB() { 
-	cfg := mysql.Config {
-		User:   os.Getenv("MYSQL_USER"),
-		Passwd: os.Getenv("MYSQL_PASSWORD"),
-		Net:    "tcp",
-		Addr:   "172.20.0.1:3306",
-		DBName: os.Getenv("MYSQL_DATABASE"),
-	}
+
+// TODO 2: Migrar esta seccion de codigo a POSTGRESQL, y tambien remover lo que ya no se usa en este test
+// func setupDB() { 
+// 	cfg := mysql.Config {
+// 		User:   os.Getenv("MYSQL_USER"),
+// 		Passwd: os.Getenv("MYSQL_PASSWORD"),
+// 		Net:    "tcp",
+// 		Addr:   "172.20.0.1:3306",
+// 		DBName: os.Getenv("MYSQL_DATABASE"),
+// 	}
 	
-	var err error
-	db, err = sql.Open("mysql", cfg.FormatDSN())
-		if err != nil {
-			log.Fatal(err)
-		}
+// 	var err error
+// 	db, err = sql.Open("mysql", cfg.FormatDSN())
+// 		if err != nil {
+// 			log.Fatal(err)
+// 		}
 	
-		if err := db.Ping(); err != nil {
-			log.Fatal(err)
-		}
-}
+// 		if err := db.Ping(); err != nil {
+// 			log.Fatal(err)
+// 		}
+// }
 
 // TODO:
 // 1.- refactorizar mis test

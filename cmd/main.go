@@ -6,24 +6,18 @@ import (
 	"log"
 	"os"
 
-	"github.com/go-sql-driver/mysql"
 	"github.com/joho/godotenv"
+	_ "github.com/lib/pq"
 )
 
 var db *sql.DB
 
 func main() {
 	// Capture connection properties
-	cfg := mysql.Config{
-		User:   os.Getenv("MYSQL_USER"),
-		Passwd: os.Getenv("MYSQL_PASSWORD"),
-		Net:    "tcp",
-		Addr:   "172.20.0.1:3306",
-		DBName: os.Getenv("MYSQL_DATABASE"),
-	}
+	connStr := os.Getenv("POSTGRES_URL")
 	// Get a database handle
 	var err error
-	db, err = sql.Open("mysql", cfg.FormatDSN())
+	db, err = sql.Open("postgres", connStr)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -34,7 +28,7 @@ func main() {
 	}
 	fmt.Println("Connected!")
 
-	albums, err := albumsByArtist("Charly Garcia")
+	albums, err := albumsByArtist(`Charly Garcia`)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -46,17 +40,17 @@ func main() {
 		log.Fatal(err)
 	}
 	fmt.Printf("album found: %v\n", album)
-	
-	// Hard-code data into db
-	albID, err := addAlbum(Album{
-		Title:  "Big Bang",
-		Artist: "Enanitos Verdes",
-		Price:  6.50,
-	})
-	if err != nil {
-		log.Fatal(err)
-	}
-	fmt.Printf("ID of album added: %v\n", albID)
+
+	// // Hard-code data into db
+	// albID, err := addAlbum(Album{
+	// 	Title:  "Big Bang",
+	// 	Artist: "Enanitos Verdes",
+	// 	Price:  6.50,
+	// })
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
+	// fmt.Printf("ID of album added: %v\n", albID)
 }
 
 func init() {
@@ -78,7 +72,7 @@ type Album struct {
 func albumsByArtist(name string) ([]Album, error) {
 	// An albums slice to hold data from returned rows
 	var albums []Album
-	rows, err := db.Query("SELECT * FROM album WHERE artist = ?", name)
+	rows, err := db.Query("SELECT id, artist, title, price FROM album WHERE artist = $1", name)
 	if err != nil {
 		return nil, fmt.Errorf("albumsByArtist %q:%v", name, err)
 	}
@@ -103,7 +97,7 @@ func albumByID(id int64) (Album, error) {
 	// An Album to hold data from the returned row
 	var alb Album
 
-	row := db.QueryRow("SELECT * FROM album WHERE id = ?", id)
+	row := db.QueryRow("SELECT id, title, artist, price FROM album WHERE id = $1", id)
 	if err := row.Scan(&alb.ID, &alb.Title, &alb.Artist, &alb.Price); err != nil {
 		if err == sql.ErrNoRows {
 			return alb, fmt.Errorf("albumsById %d: no such album", id)
@@ -115,20 +109,23 @@ func albumByID(id int64) (Album, error) {
 
 // addAlbum adds the specified album to the database,
 // returning the album ID of the new entry
-func addAlbum(alb Album) (int64, error) {
-	result, err := db.Exec("INSERT INTO album (title, artist, price) VALUES (?,?,?)", &alb.Title, &alb.Artist, &alb.Price)
-	if err != nil {
-		return 0, fmt.Errorf("addAlbum: %v", err)
-	}
-	id, err := result.LastInsertId()
-	if err != nil {
-		return 0, fmt.Errorf("addAlbum: %v", err)
-	}
-	return id, nil
-}
+// func addAlbum(alb Album) (int64, error) {
+// 	var //id int
+// 	//result := db.QueryRow(("INSERT INTO album (title, artist, price) VALUES ($1,$2,$3) RETURNING id"), ID, Title, Price)
+// 	// if err != nil {
+// 	// 	return 0, fmt.Errorf("addAlbum: %v", err)
+// 	// }
+// 	// id, err := result.Scan()
+// 	// if err != nil {
+// 	// 	return 0, fmt.Errorf("addAlbum: %v", err)
+// 	// }
+// 	//id := result.Scan()
+// 	//return id, nil
+// } TODO 2: migrar la insercion de datos a consultas sql, y desacoplar el crud del main, para el proximo hito.
 
 // TODO :
 // 1.- hacer mas modular el codigo de la app
 // 2.- hacer un refactor al makefile
 // 3.- añadir mas consultas sql, y migraciones
 // 4.- implementar tests y cobertura de los mismos
+// 5.- migrar query de insert con postgres
