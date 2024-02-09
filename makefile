@@ -24,7 +24,7 @@ database-up:
 	postgres:latest
 
 populate-database:
-	cd  internal/databases/migrations && psql ${POSTGRES_URL} -f create-tables.sql
+	cd  internal/database/ && psql ${POSTGRES_URL} -f create-tables.sql
 
 drop-database:
 	docker rm -f $(d)$(container)
