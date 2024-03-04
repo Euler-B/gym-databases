@@ -12,7 +12,7 @@ run-dependencies:
 	make database-up
 	echo "Esperar algunos minutos mientras se levanta la base de datos"
 	sleep 15
-	make populate-database
+	make db-migration
 
 database-up:
 	docker run \
@@ -23,8 +23,11 @@ database-up:
 	-d \
 	postgres:latest
 
-populate-database:
-	cd  internal/database/ && psql ${POSTGRES_URL} -f create-tables.sql
+db-migration:
+	migrate -path internal/database/migrations/ -database ${POSTGRES_URL} up
+
+db-rollback:
+	migrate -path internal/database/migrations/ -database ${POSTGRES_URL} down
 
 drop-database:
 	docker rm -f $(d)$(container)
