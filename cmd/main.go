@@ -5,35 +5,36 @@ import (
 	"log"
 
 	"github.com/euler-b/access-relational-database/internal/database"
-	
+	"github.com/euler-b/access-relational-database/models"
 )
 
 func main() {
 	database.ConnectToDb()
 	
-	// albums, err := database.AlbumsByArtist("Charly Garcia")
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-	// fmt.Printf("Albums found: %v\n", albums)
+	albums, err := database.AlbumsByArtist("Charly Garcia")
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Printf("Albums found: %v\n", albums)
 
-	// hard-Code ID 3 here to test the query
+	//hard-Code ID 2 here to test the query
 	album, err := database.AlbumByID(2)
 	if err != nil {
 		log.Fatal(err)
 	}
 	fmt.Printf("album found: %v\n", album)
 
-	// // Hard-code data into db
-	// albID, err := addAlbum(Album{
-	// 	Title:  "Big Bang",
-	// 	Artist: "Enanitos Verdes",
-	// 	Price:  6.50,
-	// })
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-	// fmt.Printf("ID of album added: %v\n", albID)
+	//Hard-code data into db
+	albID, err := database.AddAlbum(models.Album{
+		Title:  "Vasos y besos",
+		Artist: "Los Abuelos de la nada",
+		Price:  5943.97,
+		Currency: "ARS",
+	})
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Printf("ID of album added: %v\n", albID)
 }
 
 // TODO :

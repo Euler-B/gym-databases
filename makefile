@@ -1,4 +1,4 @@
-include .env
+include internal/database/.env
 d = $
 container = (docker ps -a | grep \queserapp-db | awk '{print $(d)(1)}')
 # ip-address = (docker network inspect bridge | grep Gateway | awk 'print $(d)(2)') TODO: integrar luego esta orden dentro del flujo 
@@ -51,7 +51,7 @@ test-environment-up:
 	docker run \
 	-e POSTGRES_PASSWORD=${POSTGRES_PASSWORD_TEST} \
 	-e POSTGRES_USER=${POSTGRES_USER_TEST} \
-	-p 5432:5432 \
+	-p 14256:5432 \
 	--name queserapp-db-test \
 	-d \
 	postgres:latest
@@ -60,7 +60,7 @@ stop-test-environment:
 	docker rm -f $(d)$(container-db-test)
 
 populate-db-test:
-	cd  internal/databases/migrations && psql ${POSTGRES_URL_TEST} -f create-tables.sql
+	migrate -path internal/database/migrations/ -database ${POSTGRES_URL_TEST} up
 
 tests:
-	cd cmd/ && go test -v ./...
+	go test -v ./...

@@ -1,31 +1,41 @@
 package main
 
 import (
-	//"database/sql"
-	_ "fmt"
-	//"log"
-	//"os"
-	"testing"
+	"database/sql"
+	"fmt"
+	"log"
+	"os"
 
-	//"github.com/go-sql-driver/mysql"
-	_ "github.com/joho/godotenv"
+	"testing"
 )
+
+var dbTest *sql.DB
+
+type testModelAlbum struct {
+	ID       int64
+	Title    string
+	Artist   string
+	Price    float32
+	Currency string
+}
 
 // add first test
 func TestAlbumsByArtist(t *testing.T) {
-	//setupDB()
 	// Insert test data into the database
-	_, err := addAlbum(Album{
-		Title:  "Album 1",
-		Artist: "Artist 1",
-		Price:  9.99,
+	connTestDb() 
+	_, err := addTestAlbum(testModelAlbum{
+		Title:    "Album 1",
+		Artist:   "Artist 1",
+		Price:    360.50,
+		Currency: "VES",
 	})
+
 	if err != nil {
 		t.Fatalf("Failed to insert test data: %v", err)
 	}
 
 	// Call the function being tested
-	albums, err := albumsByArtist("Artist 1")
+	albums, err := testAlbumsByArtist("Artist 1")
 	if err != nil {
 		t.Fatalf("Error retrieving albums by artist: %v", err)
 	}
@@ -40,32 +50,66 @@ func TestAlbumsByArtist(t *testing.T) {
 	if albums[0].Artist != "Artist 1" {
 		t.Errorf("Expected artist name 'Artist 1', got '%s'", albums[0].Artist)
 	}
-	if albums[0].Price != 9.99 {
+	if albums[0].Price != 360.50 {
 		t.Errorf("Expected price 9.99, got %f", albums[0].Price)
+	}
+	if albums[0].Currency != "VES" {
+		t.Errorf("Expected currency 'VES', got '%s'", albums[0].Currency)
 	}
 }
 
 
-// TODO 2: Migrar esta seccion de codigo a POSTGRESQL, y tambien remover lo que ya no se usa en este test
-// func setupDB() { 
-// 	cfg := mysql.Config {
-// 		User:   os.Getenv("MYSQL_USER"),
-// 		Passwd: os.Getenv("MYSQL_PASSWORD"),
-// 		Net:    "tcp",
-// 		Addr:   "172.20.0.1:3306",
-// 		DBName: os.Getenv("MYSQL_DATABASE"),
-// 	}
-	
-// 	var err error
-// 	db, err = sql.Open("mysql", cfg.FormatDSN())
-// 		if err != nil {
-// 			log.Fatal(err)
-// 		}
-	
-// 		if err := db.Ping(); err != nil {
-// 			log.Fatal(err)
-// 		}
-// }
+func connTestDb() {
+	conStrDbTest := os.Getenv("POSTGRES_URL_TEST")
+	var err error
+
+	dbTest, err = sql.Open("postgres", conStrDbTest)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	pingErrTest := dbTest.Ping()
+	if pingErrTest != nil {
+		log.Fatal(pingErrTest)
+	}
+
+	fmt.Println("\t\t******** 🤘 DB for Testing Conected 🤘 ******* ")
+}
+
+func addTestAlbum(albtest testModelAlbum) (int64, error) {
+	var idTest int64 
+	err := dbTest.QueryRow("INSERT INTO album (title, artist, price, currency) VALUES ($1, $2, $3, $4) RETURNING id",
+		albtest.Title, albtest.Artist, albtest.Price, albtest.Currency).Scan(&idTest)
+	if err != nil {
+		return 0, fmt.Errorf("addAlbumtest: %v", err)
+	}
+	return idTest, err
+
+}
+
+func testAlbumsByArtist(name string) ([]testModelAlbum, error){
+	var testAlbums []testModelAlbum
+	rows, err := dbTest.Query("SELECT * FROM album WHERE artist = $1", name)
+	if err != nil {
+		return nil, fmt.Errorf("albums by Artisst %q:%v", name, err)
+	}
+	defer rows.Close()
+
+	for rows.Next(){
+		var albtest testModelAlbum
+		if err := rows.Scan(&albtest.ID, &albtest.Title, &albtest.Artist, &albtest.Price, &albtest.Currency); err != nil {
+			return nil, fmt.Errorf("albums by Artist %q:%v", name, err)
+		}
+		testAlbums = append(testAlbums, albtest)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf(" albums by artist %q:%v", name, err)
+	}
+	defer rows.Close()
+	return testAlbums, nil
+}
+
+
 
 // TODO:
 // 1.- refactorizar mis test
