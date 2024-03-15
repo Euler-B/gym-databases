@@ -1,45 +1,36 @@
 package main
 
 import (
-	"fmt"
+	"flag"
 	"log"
-
-	"github.com/euler-b/access-relational-database/internal/database"
-	"github.com/euler-b/access-relational-database/models"
+	"net/http"
+	"os"
 )
 
-func main() {
-	database.ConnectToDb()
-	
-	albums, err := database.AlbumsByArtist("Charly Garcia")
-	if err != nil {
-		log.Fatal(err)
-	}
-	fmt.Printf("Albums found: %v\n", albums)
-
-	//hard-Code ID 2 here to test the query
-	album, err := database.AlbumByID(2)
-	if err != nil {
-		log.Fatal(err)
-	}
-	fmt.Printf("album found: %v\n", album)
-
-	//Hard-code data into db
-	albID, err := database.AddAlbum(models.Album{
-		Title:  "Vasos y besos",
-		Artist: "Los Abuelos de la nada",
-		Price:  5943.97,
-		Currency: "ARS",
-	})
-	if err != nil {
-		log.Fatal(err)
-	}
-	fmt.Printf("ID of album added: %v\n", albID)
+type application struct {
+	errorLog *log.Logger
+	infoLog  *log.Logger
 }
 
-// TODO :
-// 1.- hacer mas modular el codigo de la app
-// 2.- hacer un refactor al makefile
-// 3.- añadir mas consultas sql, y migraciones
-// 4.- implementar tests y cobertura de los mismos
-// 5.- migrar query de insert con postgres
+func main() {
+	addr := flag.String("addr", ":4000", "http network address")
+	flag.Parse()
+
+	infoLog := log.New(os.Stdout, "INFO\t", log.Ldate|log.Ltime)
+	errorLog := log.New(os.Stderr, "ERROR\t", log.Ldate|log.Ltime|log.Lshortfile)
+
+	app := &application{
+		errorLog: errorLog,
+		infoLog:  infoLog,
+	}
+
+	srv := &http.Server{
+		Addr:     *addr,
+		ErrorLog: errorLog,
+		Handler:  app.Routes(),
+	}
+
+	infoLog.Printf("Servidor Funcionando en el Puerto %s", *addr)
+	err := srv.ListenAndServe()
+	errorLog.Fatal(err)
+}

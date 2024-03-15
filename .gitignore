@@ -1,2 +1,5 @@
 .env 
 .idea/
+
+#build package in the app
+tmp/
